@@ -88,11 +88,15 @@ async function updateCompanyFunding(funding, company) {
   const date = `${lastFR.announcedOn.day}/${lastFR.announcedOn.month}/${
     lastFR.announcedOn.year
   }`;
+  const amount = lastFR.moneyRaised ? lastFR.moneyRaised.amount : 0;
   const response = await closeio.lead.update(company.id, {
-    "custom.lcf_9Z3LDpeub9fpLx6G7r9g2EGw0yTzAcH39giBGTWkZRk":
-      lastFR.moneyRaised.amount,
+    "custom.lcf_9Z3LDpeub9fpLx6G7r9g2EGw0yTzAcH39giBGTWkZRk": amount,
     "custom.lcf_h0rUN4DUjTKmNgyTvX6ViHyW7K0oSel4kQuNKaPnj4z": date,
-    "custom.lcf_5X1PGJB0YSCBO9wVW833wFnVHz59PvnnWD0pfjmwdxh": lastFR.fundingType
+    "custom.lcf_5X1PGJB0YSCBO9wVW833wFnVHz59PvnnWD0pfjmwdxh": _.capitalize(
+      lastFR.fundingType
+    )
+      .replace("_", " ")
+      .replace("Series unknown", "Venture - Series Unknown")
   });
 }
 
@@ -102,9 +106,13 @@ async function updateCompany(companyLinkedinUrl) {
     locations: false,
     funding: false
   };
-  const { linkedinCompany, salesNavigatorCompany } = await getCompanyInfos(
-    companyLinkedinUrl
-  );
+  let res = { linkedinCompany: null, salesNavigatorCompany: null };
+  try {
+    res = await getCompanyInfos(companyLinkedinUrl);
+  } catch (error) {
+    throw `Scraper cache error : ${error.response.data.message}`;
+  }
+  const { linkedinCompany, salesNavigatorCompany } = res;
   let locations = linkedinCompany.included.find(el => !!el.confirmedLocations);
   let funding = linkedinCompany.included.find(el => !!el.fundingData);
   const fte = salesNavigatorCompany.employeeCount;
@@ -118,12 +126,24 @@ async function updateCompany(companyLinkedinUrl) {
     locations.confirmedLocations &&
     locations.confirmedLocations.length > 0
   ) {
-    await updateCompanyLocations(locations.confirmedLocations, closeCompany);
-    updated.locations = true;
+    try {
+      await updateCompanyLocations(locations.confirmedLocations, closeCompany);
+      updated.locations = true;
+    } catch (error) {
+      console.log(
+        `⚠️ Could not update addresses because : ${JSON.stringify(error)}`
+      );
+    }
   }
-  if (funding && funding.fundingData) {
-    await updateCompanyFunding(funding.fundingData, closeCompany);
-    updated.funding = true;
+  if (funding && funding.fundingData && funding.fundingData.lastFundingRound) {
+    try {
+      await updateCompanyFunding(funding.fundingData, closeCompany);
+      updated.funding = true;
+    } catch (error) {
+      console.log(
+        `⚠️ Could not update funding because : ${JSON.stringify(error)}`
+      );
+    }
   }
   return updated;
 }
