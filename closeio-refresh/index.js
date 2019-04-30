@@ -68,8 +68,18 @@ async function updateCompanyFTE(fte, company) {
 }
 
 async function updateCompanyLocations(locations, company) {
+  const finalLocations = locations.map(el => {
+    return {
+      address_1: el.line1,
+      address_2: el.line2 || "",
+      city: el.city,
+      state: el.geographicArea || "",
+      zipcode: el.postalCode || "",
+      country: el.country
+    };
+  });
   const response = await closeio.lead.update(company.id, {
-    addresses: locations
+    addresses: finalLocations
   });
 }
 
@@ -95,32 +105,24 @@ async function updateCompany(companyLinkedinUrl) {
   const { linkedinCompany, salesNavigatorCompany } = await getCompanyInfos(
     companyLinkedinUrl
   );
-  const locations = linkedinCompany.included
-    .find(el => !!el.confirmedLocations)
-    .confirmedLocations.map(el => {
-      return {
-        address_1: el.line1,
-        address_2: el.line2 || "",
-        city: el.city,
-        state: el.geographicArea || "",
-        zipcode: el.postalCode || "",
-        country: el.country
-      };
-    });
+  let locations = linkedinCompany.included.find(el => !!el.confirmedLocations);
+  let funding = linkedinCompany.included.find(el => !!el.fundingData);
   const fte = salesNavigatorCompany.employeeCount;
-  let hq = _.get(salesNavigatorCompany, "headquarters", null);
-  let funding = _.get(linkedinCompany, "included.5.fundingData", null);
   const closeCompany = await getCloseioCompany(companyLinkedinUrl);
   if (fte) {
     await updateCompanyFTE(fte, closeCompany);
     updated.fte = true;
   }
-  if (hq) {
-    await updateCompanyLocations(locations, closeCompany);
+  if (
+    locations &&
+    locations.confirmedLocations &&
+    locations.confirmedLocations.length > 0
+  ) {
+    await updateCompanyLocations(locations.confirmedLocations, closeCompany);
     updated.locations = true;
   }
-  if (funding) {
-    await updateCompanyFunding(funding, closeCompany);
+  if (funding && funding.fundingData) {
+    await updateCompanyFunding(funding.fundingData, closeCompany);
     updated.funding = true;
   }
   return updated;
