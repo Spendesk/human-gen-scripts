@@ -85,7 +85,7 @@ async function updateCompanyLocations(locations, company) {
 
 async function updateCompanyFunding(funding, company) {
   const lastFR = funding.lastFundingRound;
-  const date = `${lastFR.announcedOn.day}/${lastFR.announcedOn.month}/${
+  const date = `${lastFR.announcedOn.month}/${lastFR.announcedOn.day}/${
     lastFR.announcedOn.year
   }`;
   const amount = lastFR.moneyRaised ? lastFR.moneyRaised.amount : 0;
