@@ -67,6 +67,12 @@ async function updateCompanyFTE(fte, company) {
   });
 }
 
+async function updateField(field, value, company) {
+  const request = {};
+  request[field] = value;
+  const response = await closeio.lead.update(company.id, request);
+}
+
 async function updateCompanyLocations(locations, company) {
   const finalLocations = locations.map(el => {
     return {
@@ -104,7 +110,10 @@ async function updateCompany(companyLinkedinUrl) {
   const updated = {
     fte: false,
     locations: false,
-    funding: false
+    funding: false,
+    description: false,
+    website: false,
+    industry: false
   };
   let res = { linkedinCompany: null, salesNavigatorCompany: null };
   try {
@@ -142,6 +151,44 @@ async function updateCompany(companyLinkedinUrl) {
     } catch (error) {
       console.log(
         `⚠️ Could not update funding because : ${JSON.stringify(error)}`
+      );
+    }
+  }
+  if (salesNavigatorCompany.description) {
+    try {
+      await updateField(
+        "description",
+        salesNavigatorCompany.description,
+        closeCompany
+      );
+      updated.description = true;
+    } catch (error) {
+      console.log(
+        `⚠️ Could not update description because : ${JSON.stringify(error)}`
+      );
+    }
+  }
+  if (salesNavigatorCompany.industry) {
+    try {
+      await updateField(
+        "lcf_rbpfN3AmrbcLW9OjmSFEXc6qfYt5OXXBwiuhvGX8JsZ",
+        salesNavigatorCompany.industry,
+        closeCompany
+      );
+      updated.industry = true;
+    } catch (error) {
+      console.log(
+        `⚠️ Could not update industry because : ${JSON.stringify(error)}`
+      );
+    }
+  }
+  if (salesNavigatorCompany.website) {
+    try {
+      await updateField("url", salesNavigatorCompany.website, closeCompany);
+      updated.website = true;
+    } catch (error) {
+      console.log(
+        `⚠️ Could not update website because : ${JSON.stringify(error)}`
       );
     }
   }
