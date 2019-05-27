@@ -21,8 +21,11 @@ async function getCachedData(scraperTag, historyTag) {
 
 async function getCompanyInfos(companyLinkedinUrl) {
   const linkedinCompanyHistoryTag = (companyLinkedinUrl.match(
-    /www.linkedin.com\/company\/(.*)(\/|)/
+    /linkedin.com\/company\/(.*)(\/|)/
   ) || [])[1];
+  if (!linkedinCompanyHistoryTag) {
+    throw "Wrong url format";
+  }
   const linkedinCompany = _.get(
     await getCachedData("linkedinCompany", linkedinCompanyHistoryTag),
     "data.data"
@@ -119,7 +122,11 @@ async function updateCompany(companyLinkedinUrl) {
   try {
     res = await getCompanyInfos(companyLinkedinUrl);
   } catch (error) {
-    throw `Scraper cache error : ${error.response.data.message}`;
+    if (error.response && error.response.data) {
+      throw `Scraper cache error : ${error.response.data.message}`;
+    } else {
+      throw error;
+    }
   }
   const { linkedinCompany, salesNavigatorCompany } = res;
   let locations = linkedinCompany.included.find(el => !!el.confirmedLocations);
