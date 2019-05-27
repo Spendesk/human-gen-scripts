@@ -97,7 +97,7 @@ async function updateCompanyFunding(funding, company) {
   const date = `${lastFR.announcedOn.month}/${lastFR.announcedOn.day}/${
     lastFR.announcedOn.year
   }`;
-  const amount = lastFR.moneyRaised ? lastFR.moneyRaised.amount : 0;
+  const amount = lastFR.moneyRaised ? lastFR.moneyRaised.amount : "Not Found";
   const response = await closeio.lead.update(company.id, {
     "custom.lcf_9Z3LDpeub9fpLx6G7r9g2EGw0yTzAcH39giBGTWkZRk": amount,
     "custom.lcf_h0rUN4DUjTKmNgyTvX6ViHyW7K0oSel4kQuNKaPnj4z": date,
